@@ -8,6 +8,7 @@
 
 int main(int argc, char *argv[]) {
     enum signal{ // signal codes for the PIPE
+        ZERO,
         OK,
         MYEOF,
     }signals;
@@ -15,12 +16,8 @@ int main(int argc, char *argv[]) {
     /*for(int i=0;i<argc;++i) {
         printf("%s ", argv[i]);
     }*/
-    FILE * fp = fopen(argv[1], "rt"); // read file
     int p_counter=1, stat_loc, pipefd[6][2];
     pipe(pipefd[1]); // [0]: read, [1]: write
-    //write(pipefd[1][1], &pread, sizeof(OK)); // Activate first process.
-    //printf("first process activated!"); // First process is activated for each process... LOL
-
     pipe(pipefd[2]); // [0]: read, [1]: write
     pipe(pipefd[3]); // [0]: read, [1]: write
     pipe(pipefd[4]); // [0]: read, [1]: write
@@ -39,16 +36,15 @@ int main(int argc, char *argv[]) {
         p_counter++;
         usleep(19000); // For better synchronization.
     }
+    // THIS HAS TO BE DONE AFTER THE FORK => INDEPENDENT
+    FILE * fp = fopen(argv[1], "rt"); // read file
     int i;
     char newline[257];
-    //fgets()
-    //write(pipefd[p_counter][1], &p_counter, sizeof(p_counter));
     printf("\n%dth process, PID %d started.\nparent: %d,\nchild: %d\n", p_counter, pid, par_pid, child_pid);
     printf("Hi! I'm %dth process!\n", p_counter);
     i=p_counter;
     while(--i) {
-        fgets(newline, 24, fp);
-        printf("[%d] %s", p_counter, newline);
+        fgets(newline, 257, fp);
     }
     sleep(1);
     // Done ONLY ONCE by the 5th process.
@@ -61,12 +57,14 @@ int main(int argc, char *argv[]) {
     while(flag) {
         while(read(pipefd[p_counter][0], &pread, sizeof(pread))==0); // Waiting for new pipe reading.
         switch(pread) {
+            case ZERO: // No reading is given...
+                break;
             case OK:
-            if(fgets(newline, 24, fp)!=NULL) {
+            if(fgets(newline, 257, fp)!=NULL) {
                 printf("[%d] %d: %s", p_counter, pid, newline);
                 write(pipefd[p_counter%5+1][1], &pread, sizeof(OK));
                 i=5;
-                while(i--) fgets(newline, 24, fp);
+                while(i--) fgets(newline, 257, fp);
                 break;
             } else {
                 printf("[%d] %d: Read all data!\n", p_counter, pid);
