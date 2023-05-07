@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
             if(fgets(newline, 257, fp)!=NULL) {
                 printf("[%d] %d: %s", p_counter, pid, newline);
                 write(pipefd[p_counter%5+1][1], &pread, sizeof(OK));
-                i=5;
+                i=4; // skip 4 lines
                 while(i--) fgets(newline, 257, fp);
                 break;
             } else {
