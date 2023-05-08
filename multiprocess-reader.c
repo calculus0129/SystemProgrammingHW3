@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
         switch(pread) {
             case ZERO: // No reading is given...
                 break;
-            case OK:
+            case OK: // Prior process could read the data.
             if(fgets(newline, 257, fp)!=NULL) {
                 printf("[%d] %d: %s", p_counter, pid, newline);
                 write(pipefd[p_counter%5+1][1], &pread, sizeof(OK));
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
                 printf("[%d] %d: Read all data!\n", p_counter, pid);
                 pread=MYEOF;
             }
-            case MYEOF:
+            case MYEOF: // Prior process could not read the data.
             write(pipefd[p_counter%5+1][1], &pread, sizeof(MYEOF));
             flag=0;
         }
